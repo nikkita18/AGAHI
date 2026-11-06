@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Play, ShieldAlert, Filter, Clock, Eye, CheckCircle2, Bot, ArrowRight } from 'lucide-react';
+import { AlertTriangle, Play, ShieldAlert, Filter, Clock, Eye, CheckCircle2, Bot, ArrowRight, Cpu } from 'lucide-react';
 import { REAL_NEAR_MISS_INCIDENTS } from '../../data/realTrafficData';
 
-export default function IncidentAuditLog({ currentTime, onSeek, onSelectIncident, onOpenCopilot }) {
+export default function IncidentAuditLog({ currentTime, onSeek, onSelectIncident, onOpenCopilot, onSimulateIncident }) {
   const [filter, setFilter] = useState('ALL'); // 'ALL', 'CRITICAL'
 
   const filteredIncidents = REAL_NEAR_MISS_INCIDENTS.filter(inc => {
@@ -126,10 +126,25 @@ export default function IncidentAuditLog({ currentTime, onSeek, onSelectIncident
                           onSelectIncident(inc);
                         }}
                         className="px-2.5 py-1 bg-[#efddcc] hover:bg-black hover:text-white text-black font-heading font-black text-[11px] rounded-md border-2 border-black shadow-[2px_2px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition cursor-pointer flex items-center gap-1"
+                        title="Jump video playback to this conflict timestamp"
                       >
                         <Play className="w-3 h-3 fill-current" />
-                        <span>INSPECT</span>
+                        <span>VIDEO</span>
                       </button>
+
+                      {onSimulateIncident && (
+                        <button
+                          onClick={() => {
+                            onSelectIncident(inc);
+                            onSimulateIncident(inc);
+                          }}
+                          className="px-2.5 py-1 bg-black hover:bg-[#0c6366] text-[#efddcc] font-heading font-black text-[11px] rounded-md border-2 border-black shadow-[2px_2px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition cursor-pointer flex items-center gap-1"
+                          title="Simulate this conflict condition in SUMO digital twin"
+                        >
+                          <Cpu className="w-3 h-3 text-[#efddcc]" />
+                          <span>SIMULATE</span>
+                        </button>
+                      )}
 
                       {onOpenCopilot && (
                         <button

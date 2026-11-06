@@ -11,14 +11,23 @@ import {
   Zap,
   CornerDownRight
 } from 'lucide-react';
+import VideoConditionSimulator from './VideoConditionSimulator';
 
 export default function LlmForensicInspectorCard({
   junction,
   selectedIncident,
   currentTime,
-  onOpenCopilot
+  onOpenCopilot,
+  activeTab,
+  onTabChange
 }) {
-  const [selectedTab, setSelectedTab] = useState('causality'); // 'causality' | 'irc' | 'sumo'
+  const [internalTab, setInternalTab] = useState('sumo'); // Default to SUMO Digital Twin
+  const selectedTab = activeTab || internalTab;
+
+  const handleTabClick = (tab) => {
+    setInternalTab(tab);
+    onTabChange?.(tab);
+  };
 
   return (
     <div className="p-6 rounded-2xl bg-white border-2 border-black shadow-[8px_8px_0px_0px_#000000] space-y-5 font-sans">
@@ -57,7 +66,7 @@ export default function LlmForensicInspectorCard({
       {/* 3 Interactive Mode Tabs */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         <button
-          onClick={() => setSelectedTab('causality')}
+          onClick={() => handleTabClick('causality')}
           className={`p-3 rounded-xl border-2 border-black font-heading font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
             selectedTab === 'causality'
               ? 'bg-[#171e19] text-[#efddcc] shadow-[4px_4px_0px_0px_#000000]'
@@ -69,7 +78,7 @@ export default function LlmForensicInspectorCard({
         </button>
 
         <button
-          onClick={() => setSelectedTab('irc')}
+          onClick={() => handleTabClick('irc')}
           className={`p-3 rounded-xl border-2 border-black font-heading font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
             selectedTab === 'irc'
               ? 'bg-[#171e19] text-[#efddcc] shadow-[4px_4px_0px_0px_#000000]'
@@ -81,7 +90,7 @@ export default function LlmForensicInspectorCard({
         </button>
 
         <button
-          onClick={() => setSelectedTab('sumo')}
+          onClick={() => handleTabClick('sumo')}
           className={`p-3 rounded-xl border-2 border-black font-heading font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
             selectedTab === 'sumo'
               ? 'bg-[#171e19] text-[#efddcc] shadow-[4px_4px_0px_0px_#000000]'
@@ -89,7 +98,7 @@ export default function LlmForensicInspectorCard({
           }`}
         >
           <Cpu className="w-4 h-4" />
-          <span>SUMO DIGITAL TWIN</span>
+          <span>SUMO DIGITAL TWIN (VIDEO SIMULATOR)</span>
         </button>
       </div>
 
@@ -163,32 +172,11 @@ export default function LlmForensicInspectorCard({
       )}
 
       {selectedTab === 'sumo' && (
-        <div className="p-4 rounded-xl bg-[#fbf4ee] border-2 border-black space-y-3">
-          <div className="border-b border-black/15 pb-2">
-            <span className="font-heading font-black text-sm text-black flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-[#0c6366]" />
-              Eclipse SUMO Microscopic Trajectory Re-Enactment
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono font-bold">
-            <div className="p-2.5 bg-white rounded-lg border border-black">
-              <span className="text-black/60 text-[10px]">Baseline Simulated TTC</span>
-              <div className="text-base font-black text-[#ff5f57]">0.82 Seconds</div>
-              <span className="text-[10px] text-black/70">Critical Conflict Reproduced</span>
-            </div>
-            <div className="p-2.5 bg-white rounded-lg border border-black">
-              <span className="text-black/60 text-[10px]">Countermeasure TTC</span>
-              <div className="text-base font-black text-[#28c840]">2.60 Seconds</div>
-              <span className="text-[10px] text-black/70">+1.78s Safe Separation</span>
-            </div>
-            <div className="p-2.5 bg-white rounded-lg border border-black">
-              <span className="text-black/60 text-[10px]">Collision Elimination</span>
-              <div className="text-base font-black text-[#0c6366]">100% Zero-Crash</div>
-              <span className="text-[10px] text-black/70">Vision Zero Compliant</span>
-            </div>
-          </div>
-        </div>
+        <VideoConditionSimulator
+          currentTime={currentTime}
+          selectedIncident={selectedIncident}
+          onOpenCopilot={onOpenCopilot}
+        />
       )}
 
       {/* Quick Prompt Bar to Open Copilot */}

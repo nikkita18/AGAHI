@@ -229,15 +229,41 @@ def sumo_simulate():
         output_img=f"output/sumo/{scenario.event_id}_report.png"
     )
     zip_path = sumo_engine.export_scenario_zip(scenario.event_id)
+    report_filename = os.path.basename(plot_path) if plot_path else None
+    zip_filename = os.path.basename(zip_path) if zip_path else None
 
     return jsonify({
         "event_id": event_id,
         "baseline": baseline_res,
         "countermeasure": intervention_res,
         "causality": causality,
-        "report_image": plot_path,
-        "zip_package": zip_path
+        "report_image": f"/api/sumo/report/{report_filename}" if report_filename else None,
+        "zip_package": f"/api/sumo/download/{zip_filename}" if zip_filename else None,
+        "video_conditions": {
+            "v1_speed_kmh": scenario.veh1_speed_kmh,
+            "v2_speed_kmh": scenario.veh2_speed_kmh,
+            "ttc_seconds": scenario.ttc_seconds,
+            "approach_angle_deg": scenario.approach_angle_deg,
+            "cluster_frequency": scenario.cluster_frequency,
+            "location_desc": scenario.location_desc
+        }
     })
+
+@app.route('/api/sumo/report/<path:filename>', methods=['GET'])
+def get_sumo_report(filename):
+    sumo_dir = os.path.abspath("output/sumo")
+    file_path = os.path.join(sumo_dir, filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, mimetype='image/png')
+    return jsonify({"error": "Report image not found"}), 404
+
+@app.route('/api/sumo/download/<path:filename>', methods=['GET'])
+def download_sumo_zip(filename):
+    sumo_dir = os.path.abspath("output/sumo")
+    file_path = os.path.join(sumo_dir, filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True, download_name=filename)
+    return jsonify({"error": "Zip file not found"}), 404
 
 
 if __name__ == '__main__':

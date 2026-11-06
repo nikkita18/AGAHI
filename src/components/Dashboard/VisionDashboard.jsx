@@ -26,6 +26,7 @@ export default function VisionDashboard({ user, onLogout }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState(REAL_NEAR_MISS_INCIDENTS[0]);
+  const [inspectorTab, setInspectorTab] = useState('sumo'); // 'causality' | 'irc' | 'sumo'
 
   // Modal report state
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -155,12 +156,14 @@ export default function VisionDashboard({ user, onLogout }) {
 
         </div>
 
-        {/* Section 2: Dedicated AI Vision Zero LLM Forensic Inspector Card */}
-        <section>
+        {/* Section 2: Dedicated AI Vision Zero LLM Forensic Inspector & Video Simulator */}
+        <section id="forensic-inspector-card">
           <LlmForensicInspectorCard
             junction={selectedJunction}
             selectedIncident={selectedIncident}
             currentTime={currentTime}
+            activeTab={inspectorTab}
+            onTabChange={setInspectorTab}
             onOpenCopilot={() => setIsLlmOpen(true)}
           />
         </section>
@@ -189,6 +192,11 @@ export default function VisionDashboard({ user, onLogout }) {
             currentTime={currentTime}
             onSeek={handleSeek}
             onSelectIncident={handleSelectIncident}
+            onSimulateIncident={(inc) => {
+              setInspectorTab('sumo');
+              handleSelectIncident(inc);
+              document.getElementById('forensic-inspector-card')?.scrollIntoView({ behavior: 'smooth' });
+            }}
             onOpenCopilot={() => setIsLlmOpen(true)}
           />
         </section>
