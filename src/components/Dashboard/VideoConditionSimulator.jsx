@@ -112,14 +112,14 @@ export default function VideoConditionSimulator({
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(0, 0, width, height);
 
-      // --- Draw Roadways ---
-      const roadWidth = 72;
+      // --- Draw Roadways (Left-Hand Drive Standard for Indian Roads) ---
+      const roadWidth = 80;
 
       // North-South Main Arm (Vertical Road)
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(cx - roadWidth / 2, 0, roadWidth, height);
 
-      // West-East Arm with 68° Oblique Angle
+      // West-East Arm with Oblique Angle
       ctx.save();
       ctx.translate(cx, cy);
       const angleRad = ((approachAngle - 90) * Math.PI) / 180;
@@ -127,46 +127,74 @@ export default function VideoConditionSimulator({
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(-width, -roadWidth / 2, width * 2, roadWidth);
 
-      // Centerline for crossing arm
+      // Centerline for crossing arm (stops at intersection box)
       ctx.strokeStyle = '#e2e8f0';
       ctx.setLineDash([8, 8]);
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(-width, 0);
+      ctx.lineTo(-roadWidth / 2 - 5, 0);
+      ctx.moveTo(roadWidth / 2 + 5, 0);
       ctx.lineTo(width, 0);
       ctx.stroke();
       ctx.restore();
 
-      // Centerline for North-South Arm
+      // Centerline for North-South Arm (stops before speed table & crosswalk)
       ctx.strokeStyle = '#f59e0b';
       ctx.setLineDash([8, 8]);
       ctx.lineWidth = 2;
       ctx.beginPath();
+      // Upper segment (stops before speed table)
       ctx.moveTo(cx, 0);
+      ctx.lineTo(cx, cy - 105);
+      // Lower segment (resumes after intersection)
+      ctx.moveTo(cx, cy + 50);
       ctx.lineTo(cx, height);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Zebra Crosswalk on North Approach
+      // Zebra Crosswalk on North Approach (Clean, Centered, Below Speed Table)
       ctx.fillStyle = '#cbd5e1';
-      for (let i = -roadWidth / 2 + 4; i < roadWidth / 2 - 4; i += 12) {
-        ctx.fillRect(cx + i, cy - 65, 8, 16);
+      for (let i = -roadWidth / 2 + 6; i < roadWidth / 2 - 6; i += 14) {
+        ctx.fillRect(cx + i, cy - 58, 8, 14);
       }
 
       // If Speed Table Countermeasure is active, draw Raised Platform with chevrons
       if (speedTableActive) {
-        ctx.fillStyle = '#f59e0b';
-        ctx.globalAlpha = 0.35;
-        ctx.fillRect(cx - roadWidth / 2, cy - 85, roadWidth, 18);
-        ctx.globalAlpha = 1.0;
+        const tableY = cy - 90;
+        const tableHeight = 22;
+        const tableX = cx - roadWidth / 2;
+
+        // Base Raised Table Box
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.4)';
+        ctx.fillRect(tableX, tableY, roadWidth, tableHeight);
         ctx.strokeStyle = '#f59e0b';
         ctx.lineWidth = 2;
-        ctx.strokeRect(cx - roadWidth / 2, cy - 85, roadWidth, 18);
+        ctx.strokeRect(tableX, tableY, roadWidth, tableHeight);
 
-        // Text label
+        // Chevron / Diagonal Ramp Stripes inside Table
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(tableX, tableY, roadWidth, tableHeight);
+        ctx.clip();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2;
+        for (let x = tableX - 20; x < tableX + roadWidth + 20; x += 12) {
+          ctx.beginPath();
+          ctx.moveTo(x, tableY);
+          ctx.lineTo(x + 12, tableY + tableHeight);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Perfectly Centered Text Label Above the Table
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
         ctx.fillStyle = '#f59e0b';
         ctx.font = 'bold 9px monospace';
-        ctx.fillText('IRC:SP:99 RAISED TABLE (100mm)', cx - 68, cy - 90);
+        ctx.fillText('IRC:SP:99 RAISED TABLE (100mm)', cx, tableY - 4);
+        ctx.restore();
       }
 
       // --- Vehicle Positions based on simProgress (0.0 to 1.0) ---
@@ -175,21 +203,21 @@ export default function VideoConditionSimulator({
       const v2EffKmh = speedTableActive ? Math.min(veh2Speed, 20.0) : veh2Speed;
 
       // Normalization: progress 0.5 is arrival at conflict point (cx, cy)
-      // In baseline: both arrive almost simultaneously at progress 0.5!
-      // In countermeasure: Vehicle 1 is slowed, arrives at progress 0.65; Vehicle 2 crosses first at progress 0.45.
       const p1 = speedTableActive ? simProgress * 0.8 : simProgress;
       const p2 = speedTableActive ? simProgress * 1.15 : simProgress;
 
-      // Vehicle 1 travels down from North (y = 15 to y = height - 15)
+      // Vehicle 1 travels down from North in LEFT lane (Indian Left-Hand Drive)
+      const laneOffset1 = -roadWidth / 4; // -20px left of centerline
       const v1Y = 15 + p1 * (height - 30);
-      const v1X = cx + 10;
+      const v1X = cx + laneOffset1;
 
-      // Vehicle 2 travels across from West at angle
+      // Vehicle 2 travels across from West at angle in its driving lane
       const startDist = -width * 0.45;
       const endDist = width * 0.45;
       const curDist = startDist + p2 * (endDist - startDist);
-      const v2X = cx + curDist * Math.cos(angleRad) - 10 * Math.sin(angleRad);
-      const v2Y = cy + curDist * Math.sin(angleRad) + 10 * Math.cos(angleRad);
+      const laneOffset2 = roadWidth / 4;
+      const v2X = cx + curDist * Math.cos(angleRad) - laneOffset2 * Math.sin(angleRad);
+      const v2Y = cy + curDist * Math.sin(angleRad) + laneOffset2 * Math.cos(angleRad);
 
       // Separation Distance (meters approximated by pixels)
       const dx = v1X - v2X;
