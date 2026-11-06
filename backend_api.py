@@ -76,6 +76,75 @@ def get_heatmap():
             return send_file(p, mimetype='image/png')
     return jsonify({"error": "Heatmap not found"}), 404
 
+@app.route('/api/video/process', methods=['POST'])
+def process_uploaded_video():
+    if 'video' not in request.files:
+        return jsonify({"error": "No video file provided"}), 400
+
+    file = request.files['video']
+    if not file.filename:
+        return jsonify({"error": "Empty filename"}), 400
+
+    os.makedirs('output/uploads', exist_ok=True)
+    os.makedirs('public', exist_ok=True)
+
+    input_path = os.path.join('output/uploads', f"input_{int(time.time())}.mp4")
+    file.save(input_path)
+
+    tracked_output = os.path.abspath("public/user_tracked_video.mp4")
+
+    try:
+        import cv2
+        cap = cv2.VideoCapture(input_path)
+        fps = max(15.0, cap.get(cv2.CAP_PROP_FPS) or 30.0)
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 640)
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 360)
+
+        # Process first 150 frames for fast edge response
+        max_frames = 150
+        tracker = YOLOVehicleTracker(confidence=0.28)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        writer = cv2.VideoWriter(tracked_output, fourcc, fps, (w, h))
+
+        frame_idx = 0
+        total_tracked = 0
+
+        while cap.isOpened() and frame_idx < max_frames:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frame_idx += 1
+
+            objects, boxes = tracker.detect_and_update(frame)
+            total_tracked = max(total_tracked, len(objects))
+
+            annotated = frame.copy()
+            for obj_id, (cx, cy) in objects.items():
+                if obj_id in boxes:
+                    bx, by, bw, bh = boxes[obj_id]
+                    cv2.rectangle(annotated, (bx, by), (bx + bw, by + bh), (0, 240, 255), 2)
+                    lbl = f"ID #{obj_id} VEH"
+                    cv2.putText(annotated, lbl, (bx, max(15, by - 5)), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 240, 255), 1)
+
+            cv2.putText(annotated, "AGAHI YOLOv8 + BYTETRACK AI TRACKING", (15, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 120), 2)
+            writer.write(annotated)
+
+        cap.release()
+        writer.release()
+
+        return jsonify({
+            "status": "success",
+            "frames_processed": frame_idx,
+            "tracked_objects": total_tracked,
+            "tracked_video_url": "/user_tracked_video.mp4"
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "fallback",
+            "message": str(e),
+            "tracked_video_url": "/sample_traffic.mp4"
+        })
+
 # -------------------------------------------------------------
 # 3. LLM Forensic Safety Copilot Endpoint
 # -------------------------------------------------------------
