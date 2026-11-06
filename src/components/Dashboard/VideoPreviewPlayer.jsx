@@ -210,32 +210,6 @@ export default function VideoPreviewPlayer({
           </div>
         </div>
 
-        {/* Active Near-Miss Conflict Alert Banner */}
-        {activeConflict && (
-          <div className="absolute bottom-16 left-3 right-3 bg-[#ff5f57] border-2 border-black text-black p-2.5 rounded-xl shadow-[4px_4px_0px_0px_#000000] flex items-center justify-between animate-bounce">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-black shrink-0" />
-              <div>
-                <span className="font-heading font-black text-xs uppercase block">
-                  CRITICAL SURROGATE CONFLICT DETECTED
-                </span>
-                <span className="text-[11px] font-mono font-bold">
-                  TTC: {activeConflict.ttc}s · {activeConflict.actor1?.id || 'Veh #1'} vs {activeConflict.actor2?.id || 'Veh #2'}
-                </span>
-              </div>
-            </div>
-
-            {onOpenCopilot && (
-              <button
-                onClick={onOpenCopilot}
-                className="px-2 py-1 bg-black text-[#efddcc] rounded-lg border border-black font-heading font-black text-[10px] hover:bg-white hover:text-black transition cursor-pointer"
-              >
-                DIAGNOSE WITH LLM
-              </button>
-            )}
-          </div>
-        )}
-
         {/* Center Big Play Button (when paused) */}
         {!isPlaying && (
           <button
@@ -248,8 +222,46 @@ export default function VideoPreviewPlayer({
 
       </div>
 
+      {/* Static Near-Miss Conflict Alert Box Just Below Video (No Jumping / Unobstructed CCTV) */}
+      <div className="mt-3">
+        {activeConflict ? (
+          <div className="p-3 bg-[#ff5f57] border-2 border-black text-black rounded-xl shadow-[4px_4px_0px_0px_#000000] flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-black text-[#ff5f57] flex items-center justify-center shrink-0 border border-black">
+                <AlertTriangle className="w-5 h-5 fill-[#ff5f57] text-black" />
+              </div>
+              <div>
+                <span className="font-heading font-black text-xs uppercase block text-black">
+                  CRITICAL SURROGATE CONFLICT DETECTED
+                </span>
+                <span className="text-[11px] font-mono font-bold text-black/90">
+                  TTC: {activeConflict.ttc}s · {activeConflict.actor1?.id || 'Veh #1'} vs {activeConflict.actor2?.id || 'Veh #2'}
+                </span>
+              </div>
+            </div>
+
+            {onOpenCopilot && (
+              <button
+                onClick={onOpenCopilot}
+                className="px-3 py-1.5 bg-black hover:bg-white hover:text-black text-[#efddcc] rounded-lg border-2 border-black font-heading font-black text-[11px] shadow-[2px_2px_0px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-colors cursor-pointer shrink-0"
+              >
+                DIAGNOSE WITH LLM
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="px-3 py-2 bg-[#fbf4ee] border-2 border-black/25 text-black/70 rounded-xl flex items-center justify-between text-xs font-mono font-bold">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#28c840] shrink-0" />
+              <span>CCTV SURVEILLANCE NOMINAL · ZERO ACTIVE CLASH</span>
+            </div>
+            <span className="text-[10px] text-black/50">TTC &gt; 1.6s SAFE</span>
+          </div>
+        )}
+      </div>
+
       {/* Video Playback Controls Bar */}
-      <div className="mt-4 space-y-2.5">
+      <div className="mt-3 space-y-2.5">
         
         {/* Timeline Progress Slider */}
         <div className="flex items-center gap-3">
